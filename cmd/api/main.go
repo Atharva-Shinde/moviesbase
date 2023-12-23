@@ -35,12 +35,12 @@ func main() {
 		logger: lg,
 	}
 
-	multiplexer := http.NewServeMux()
-	multiplexer.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
+	// multiplexer := http.NewServeMux()
+	// multiplexer.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
 
 	server := http.Server{
 		Addr:         fmt.Sprintf(":%v", cfg.port),
-		Handler:      multiplexer,
+		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second, // server 408 error (time out)
 		WriteTimeout: 10 * time.Second,
