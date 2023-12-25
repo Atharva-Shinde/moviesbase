@@ -17,7 +17,7 @@ type config struct {
 }
 
 // middleware of the application
-type middleware struct {
+type application struct {
 	config config
 	logger *log.Logger
 }
@@ -30,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	lg := log.New(os.Stdout, "", log.Ldate|log.Ltime)
-	app := middleware{
+	app := application{
 		config: cfg,
 		logger: lg,
 	}
