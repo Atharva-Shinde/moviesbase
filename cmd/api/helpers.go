@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -22,6 +23,7 @@ func (app *application) readIDParam(w http.ResponseWriter, r *http.Request) (int
 	return id, nil
 }
 
+// converts go objects into JSON format
 func (app *application) writeJSON(w http.ResponseWriter, data envelope) error {
 	// use json.NewEncoder() slightly faster than json.Marshal()
 	// use json.MarshalIndent() to create a prettier terminal output of json
@@ -31,5 +33,16 @@ func (app *application) writeJSON(w http.ResponseWriter, data envelope) error {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(marshalData)
+	return nil
+}
+
+func (app *application) readJSON(w http.ResponseWriter, r *http.Request, input interface{}) error {
+	// can use json.UnMarshal() instead of json.NewDecoder
+	// json.NewDecoder() is more efficient than json.UnMarshal()
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(w, "%+v\n", input)
 	return nil
 }

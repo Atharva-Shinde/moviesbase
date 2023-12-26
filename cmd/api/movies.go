@@ -11,6 +11,12 @@ import (
 // POST: /v1/movies
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "creating a movie")
+	err := app.readJSON(w, r, data.Movie{})
+	if err != nil {
+		app.errorResponse(w, r, 500, err)
+		fmt.Fprint(w, err) //personal use
+		return
+	}
 }
 
 // GET: /v1/movies/<id>
