@@ -48,13 +48,13 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, input i
 	// can use json.UnMarshal() instead of json.NewDecoder
 	// json.NewDecoder() is more efficient than json.UnMarshal()
 	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields() //disallow unknown json fields like "rating", "budget"
-	// importance of pointers: try this err := dec.Decode(&input)
-	err := dec.Decode(input)
+	dec.DisallowUnknownFields() // disallow unknown json fields like "rating", "budget"
+	// err := dec.Decode(&input) this works as well why?
+	err := dec.Decode(&input) // why doesn't DisallowUnknownFields work if I don't provide pointer to movie in movies.go: app.readJSON(w, r, movie)
 	if err != nil {
 		return err
 	}
-	err = dec.Decode(&struct{}{})
+	err = dec.Decode(&struct{}{}) // curl -d '{"title": "Moana"}sldklsjdl' localhost:8080/v1/movies
 	if err != io.EOF {
 		return errors.New("json body should contain only one string value")
 	}
