@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/atharva-shinde/moviesbase/internal/data"
 	"github.com/atharva-shinde/moviesbase/internal/validator"
@@ -39,18 +38,15 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 
 // GET: /v1/movies/<id>
 func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := app.readIDParam(w, r)
+	id, err := app.readIDParam(r)
 	if err != nil {
-		app.errorResponse(w, r, 500, err)
+		app.errorResponse(w, r, http.StatusNotFound, err)
 		return
 	}
-	movie := data.Movie{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Life is beautiful",
-		Genres:    []string{"history", "action", "war"},
-		Runtime:   122,
-		Version:   1,
+	movie, err := app.model.Get(id)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusNotFound, err)
+		return
 	}
 	err = app.writeJSON(w, 201, envelope{"movie": movie}, nil)
 	if err != nil {

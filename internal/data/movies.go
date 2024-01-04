@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/atharva-shinde/moviesbase/internal/validator"
@@ -53,13 +54,35 @@ func (m MovieModel) Insert(movie *Movie) error {
 	RETURNING id,created_at,version
 	`
 
+	//Scan(dest...) copies the requested row’s column values and stores them into Go values (dest...)
+	//The below QueryRow returns id, created_at and version. Then the Scan() function call stores them in designated go values
 	err := m.DB.QueryRow(query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 
 	return err
 }
 
 func (m MovieModel) Get(id int64) (*Movie, error) {
-	return nil, nil
+	if id < 1 {
+		return nil, errors.New("no record found")
+	}
+	query := `
+	SELECT * from movies
+	WHERE id=$1
+	`
+	movie := Movie{}
+	err := m.DB.QueryRow(query, id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres), // to avoid sql: Scan error on column index 5, name "genres": unsupported Scan, storing driver.Value type []uint8 into type *[]string
+		&movie.Version,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &movie, nil
 }
 
 func (m MovieModel) Update(movie *Movie) error {
