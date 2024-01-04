@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/atharva-shinde/moviesbase/internal/validator"
@@ -86,7 +87,16 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 }
 
 func (m MovieModel) Update(movie *Movie) error {
-	return nil
+	query := `
+	UPDATE movies
+	SET title=$1, year=$2, runtime=$3, genres=$4, version=version+1
+	WHERE id = $5
+	RETURNING version
+	`
+	err := m.DB.QueryRow(query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres), movie.ID).Scan(&movie.Version) // Scan accesses the prexisting movie and just updates the version with the newer version
+	fmt.Println("erorororr:,", err)
+	fmt.Println("genres", movie.Genres)
+	return err
 }
 
 func (m MovieModel) Delete(id int64) error {

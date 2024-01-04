@@ -54,3 +54,33 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 }
+
+// PUT: /v1/movies/:id
+// updates the movie using the ID which is accessed from the http request URL and not the BODY of the request
+func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusNotFound, err)
+		return
+	}
+	movie, err := app.model.Get(id)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusNotFound, err)
+		return
+	}
+	wantMovieData := data.Movie{}
+	err = app.readJSON(w, r, &wantMovieData)
+	if err != nil {
+		return
+	}
+	movie.Title = wantMovieData.Title
+	movie.Genres = wantMovieData.Genres
+	movie.Runtime = wantMovieData.Runtime
+	movie.Year = wantMovieData.Year
+
+	err = app.model.Update(movie)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusNotFound, err)
+		return
+	}
+}
