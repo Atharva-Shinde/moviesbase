@@ -48,9 +48,9 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		app.errorResponse(w, r, http.StatusNotFound, err)
 		return
 	}
-	err = app.writeJSON(w, 201, envelope{"movie": movie}, nil)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, nil)
 	if err != nil {
-		app.errorResponse(w, r, 500, err)
+		app.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -81,6 +81,30 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	err = app.model.Update(movie)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusNotFound, err)
+		return
+	}
+	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, nil)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+}
+
+// DELETE /v1/movies/:id
+func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusNotFound, err)
+		return
+	}
+	err = app.model.Delete(id)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusNotFound, err)
+		return
+	}
+	err = app.writeJSON(w, http.StatusOK, envelope{"message": "movie successfully deleted"}, nil)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 }
