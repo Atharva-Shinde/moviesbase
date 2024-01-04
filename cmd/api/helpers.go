@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -24,20 +23,25 @@ func (app *application) readIDParam(w http.ResponseWriter, r *http.Request) (int
 	return id, nil
 }
 
-// converts go objects into JSON format
-func (app *application) writeJSON(w http.ResponseWriter, data envelope) error {
+// converts go objects into JSON format and writes it to http response
+func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	// use json.NewEncoder() slightly faster than json.Marshal()
 	// use json.MarshalIndent() to create a prettier terminal output of json
 	marshalData, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
+	for key, value := range headers {
+		w.Header()[key] = value
+		// w.Header().Add(key, value)
+	}
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	w.Write(marshalData)
 	return nil
 }
 
-// converts JSON in go object values
+// converts JSON from the http request body into go object values
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, input interface{}) error {
 	// set the maximum size of the request body to 1 MB, this helps in tackling Denial of Service
 	// fmt.Printf("&input type %T", &input) // *interface{}
@@ -58,6 +62,6 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, input i
 	if err != io.EOF {
 		return errors.New("json body should contain only one string value")
 	}
-	fmt.Fprintf(w, "%+v\n", input)
+	// fmt.Fprintf(w, "%+v\n", input)
 	return nil
 }
