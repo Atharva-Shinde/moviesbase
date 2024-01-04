@@ -1,20 +1,33 @@
 package data
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/atharva-shinde/moviesbase/internal/validator"
+	"github.com/lib/pq"
 )
+
+// wrapper for sql connection pool
+type MovieModel struct {
+	DB *sql.DB
+}
+
+func NewMovieModel(db *sql.DB) MovieModel {
+	return MovieModel{
+		DB: db,
+	}
+}
 
 type Movie struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"-"` //this field is unexported
 	Title     string    `json:"title"`
-	Year      int32     `json:"year,omitempty"`
-	rating    int32     // currently 'rating' is unexported, to change this behaviour capitalise 'r'
-	Runtime   int32     `json:"runtime,omitempty,string"` //json output will be a string
-	Genres    []string  `json:",omitempty"`
-	Version   int32     `json:"version"` // starts from 1 and will increment each time movie info is updated
+	Year      int32     `json:"year"`
+	// rating    int32     // `json: "rating,omitempty,string"` // json output will be string; currently 'rating' is unexported, to change this behaviour capitalise 'r'
+	Runtime int32    `json:"runtime,omitempty"`
+	Genres  []string `json:"genres"`
+	Version int32    `json:"version"` // starts from 1 and will increment each time movie info is updated
 }
 
 // can have a validator receiver method instead of this function but it will affect readability: v.data.ValidateMovie(movie)
@@ -31,4 +44,28 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 	v.Check(len(movie.Genres) <= 5, "genres", "must not contain more than 5 genres")
 	v.Check(validator.Unique(movie.Genres), "genres", "must not contain duplicate values")
 
+}
+
+func (m MovieModel) Insert(movie *Movie) error {
+	query := `
+	INSERT INTO movies (title, year,runtime,genres) 
+	VALUES ($1,$2,$3,$4)
+	RETURNING id,created_at,version
+	`
+
+	err := m.DB.QueryRow(query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+
+	return err
+}
+
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+func (m MovieModel) Delete(id int64) error {
+	return nil
 }

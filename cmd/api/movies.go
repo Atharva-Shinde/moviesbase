@@ -15,7 +15,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	// importance of pointers: try this err := app.readJSON(w, r, movie)
 	err := app.readJSON(w, r, &movie)
 	if err != nil {
-		fmt.Fprint(w, err) //personal use
+		// fmt.Fprint(w, err)
 		return
 	}
 	v := validator.New()
@@ -23,6 +23,17 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	if !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
+	}
+	err = app.model.Insert(&movie)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, err)
+	}
+	header := make(http.Header)
+	header.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, header)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, err)
 	}
 }
 
@@ -41,7 +52,7 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		Runtime:   122,
 		Version:   1,
 	}
-	err = app.writeJSON(w, envelope{"movie": movie})
+	err = app.writeJSON(w, 201, envelope{"movie": movie}, nil)
 	if err != nil {
 		app.errorResponse(w, r, 500, err)
 		return

@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/atharva-shinde/moviesbase/internal/data"
 )
 
 const version = "1.0"
@@ -31,6 +31,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
+	model  data.MovieModel
 }
 
 func main() {
@@ -42,6 +43,7 @@ func main() {
 	flag.IntVar(&cfg.db.maxIdleConns, "mic", 25, "maximum idle connections in Postgresql connection pool")
 	flag.IntVar(&cfg.db.maxOpenConns, "moc", 25, "maximum open connections in Postgresql connection pool")
 	flag.StringVar(&cfg.db.maxIdleTime, "mit", "15m", "maximum idle time a connection can exist in Postgresql connection pool")
+	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("moviesbase_dsn"), "PostgreSQL DSN")
 	// flag.StringVar(&cfg.db.dsn, "dsn", "postgres://moviesbase:password@localhost/moviesbase", "PostgreSQL DSN")
 	flag.Parse()
 
@@ -60,6 +62,7 @@ func main() {
 	app := application{
 		config: cfg,
 		logger: lg,
+		model:  data.NewMovieModel(db),
 	}
 
 	// multiplexer := http.NewServeMux()
