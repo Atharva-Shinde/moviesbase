@@ -63,21 +63,65 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		app.errorResponse(w, r, http.StatusNotFound, err)
 		return
 	}
+	fmt.Println("asfd")
 	movie, err := app.model.Get(id)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusNotFound, err)
 		return
 	}
-	wantMovieData := data.Movie{}
+
+	// !check the comment on line 86
+	//wantMovieData:= data.Movie{}
+	wantMovieData := struct {
+		Title   *string  `json:"title"`
+		Runtime *int32   `json:"runtime"`
+		Year    *int32   `json:"year"`
+		Genres  []string `json:"genres"` // no need to introduce a pointer, as slices can are nil by default
+	}{}
 	err = app.readJSON(w, r, &wantMovieData)
 	if err != nil {
 		return
 	}
-	movie.Title = wantMovieData.Title
-	movie.Genres = wantMovieData.Genres
-	movie.Runtime = wantMovieData.Runtime
-	movie.Year = wantMovieData.Year
 
+	// we want to let users update values in the movie w/o the need to provide an entire json containing all the fields and their values
+	// to achieve this we need to tell our code to check only for the provided fields
+	// but this is what happens if we try comparing the fields(title, year etc.) with the actual data; eg: wantMovieData.Year != 0{....}
+	// we are restricted to compare Year with zero! And this not a behaviour we desire
+	// therefore rather than checking if the year field is zero or not we should rather validate if the year field is nil
+	// to achive this, we need to convert the wantMovieData fields to pointers so that all fields can be compared to nil
+	// if wantMovieData.Title != "" {
+	// 	movie.Title = wantMovieData.Title
+	// }
+	// if wantMovieData.Genres != nil {
+	// 	movie.Genres = wantMovieData.Genres
+	// }
+	// if wantMovieData.Runtime != 0 {
+	// 	movie.Runtime = wantMovieData.Runtime
+	// }
+	// if wantMovieData.Year != 0 {
+	// 	movie.Year = wantMovieData.Year
+	// }
+
+	// update every fields that the users provides into the movie object
+	if wantMovieData.Title != nil {
+		movie.Title = *wantMovieData.Title // dereference the title
+	}
+	if wantMovieData.Runtime != nil {
+		movie.Runtime = *wantMovieData.Runtime
+	}
+	if wantMovieData.Year != nil {
+		movie.Year = *wantMovieData.Year
+	}
+	if wantMovieData.Genres != nil {
+		movie.Genres = wantMovieData.Genres
+	}
+
+	v := validator.New()
+	data.ValidateMovie(v, movie)
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
 	err = app.model.Update(movie)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusNotFound, err)
