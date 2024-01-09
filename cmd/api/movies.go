@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -63,7 +64,6 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		app.errorResponse(w, r, http.StatusNotFound, err)
 		return
 	}
-	fmt.Println("asfd")
 	movie, err := app.model.Get(id)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusNotFound, err)
@@ -80,9 +80,9 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	}{}
 	err = app.readJSON(w, r, &wantMovieData)
 	if err != nil {
+		app.errorResponse(w, r, http.StatusInternalServerError, "bad json response")
 		return
 	}
-
 	// we want to let users update values in the movie w/o the need to provide an entire json containing all the fields and their values
 	// to achieve this we need to tell our code to check only for the provided fields
 	// but this is what happens if we try comparing the fields(title, year etc.) with the actual data; eg: wantMovieData.Year != 0{....}
@@ -115,16 +115,16 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	if wantMovieData.Genres != nil {
 		movie.Genres = wantMovieData.Genres
 	}
-
 	v := validator.New()
 	data.ValidateMovie(v, movie)
 	if !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
+	// TODO: check if the new data is same as the existing data is affirmative, gracefully log it
 	err = app.model.Update(movie)
 	if err != nil {
-		app.errorResponse(w, r, http.StatusNotFound, err)
+		app.errorResponse(w, r, http.StatusConflict, sql.ErrNoRows)
 		return
 	}
 	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, nil)

@@ -3,7 +3,6 @@ package data
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/atharva-shinde/moviesbase/internal/validator"
@@ -14,6 +13,11 @@ import (
 type MovieModel struct {
 	DB *sql.DB
 }
+
+var (
+	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict   = errors.New("edit conflict")
+)
 
 func NewMovieModel(db *sql.DB) MovieModel {
 	return MovieModel{
@@ -64,7 +68,7 @@ func (m MovieModel) Insert(movie *Movie) error {
 
 func (m MovieModel) Get(id int64) (*Movie, error) {
 	if id < 1 {
-		return nil, errors.New("no record found")
+		return nil, ErrRecordNotFound
 	}
 	query := `
 	SELECT * from movies
@@ -94,8 +98,6 @@ func (m MovieModel) Update(movie *Movie) error {
 	RETURNING version
 	`
 	err := m.DB.QueryRow(query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres), movie.ID).Scan(&movie.Version) // Scan accesses the prexisting movie and just updates the version with the newer version
-	fmt.Println("erorororr:,", err)
-	fmt.Println("genres", movie.Genres)
 	return err
 }
 
