@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -58,10 +59,11 @@ func (m MovieModel) Insert(movie *Movie) error {
 	VALUES ($1,$2,$3,$4)
 	RETURNING id,created_at,version
 	`
-
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
 	//Scan(dest...) copies the requested row’s column values and stores them into Go values (dest...)
 	//The below QueryRow returns id, created_at and version. Then the Scan() function call stores them in designated go values
-	err := m.DB.QueryRow(query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+	err := m.DB.QueryRowContext(ctx, query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 
 	return err
 }
@@ -75,7 +77,9 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	WHERE id=$1
 	`
 	movie := Movie{}
-	err := m.DB.QueryRow(query, id).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
@@ -97,7 +101,9 @@ func (m MovieModel) Update(movie *Movie) error {
 	WHERE id = $5
 	RETURNING version
 	`
-	err := m.DB.QueryRow(query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres), movie.ID).Scan(&movie.Version) // Scan accesses the prexisting movie and just updates the version with the newer version
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	err := m.DB.QueryRowContext(ctx, query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres), movie.ID).Scan(&movie.Version) // Scan accesses the prexisting movie and just updates the version with the newer version
 	return err
 }
 
