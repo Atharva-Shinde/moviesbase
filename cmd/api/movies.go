@@ -152,3 +152,8 @@ func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 }
+
+// GET /v1/movies
+func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: logic
+}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
@@ -64,4 +65,12 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, input i
 	}
 	// fmt.Fprintf(w, "%+v\n", input)
 	return nil
+}
+
+func (app *application) readString(queryValues url.Values, key string) string {
+	str := queryValues.Get(key)
+	if str == "" {
+		return ""
+	}
+	return str
 }
