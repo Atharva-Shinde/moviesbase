@@ -155,5 +155,23 @@ func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 
 // GET /v1/movies
 func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: logic
+	queryableParameters := struct {
+		Title    string
+		Genres   []string
+		Page     int
+		PageSize int
+		Sort     string
+		// Runtime int32
+		// Year int32
+	}{}
+	v := validator.New()
+	queryValues := r.URL.Query()
+	queryableParameters.Title = app.readString(queryValues, "title")
+	queryableParameters.Page = app.readInt(queryValues, "page", v)
+	queryableParameters.PageSize = app.readInt(queryValues, "page_size", v)
+	queryableParameters.Genres = app.readCSV(queryValues, "genres")
+	queryableParameters.Sort = app.readString(queryValues, "sort")
+
+	fmt.Fprintf(w, "%+v\n", queryableParameters)
+
 }

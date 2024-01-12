@@ -7,8 +7,17 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
+	"github.com/atharva-shinde/moviesbase/internal/validator"
 	"github.com/julienschmidt/httprouter"
+)
+
+var (
+	DefaultString   = ""
+	DefaultSlice    = []string{}
+	DefaultPage     = 1
+	DefaultPageSize = 24
 )
 
 type envelope map[string]interface{}
@@ -54,7 +63,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, input i
 	// json.NewDecoder() is more efficient than json.UnMarshal()
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields() // disallow unknown json fields like "rating", "budget"
-	// err := dec.Decode(&input) this works as well why?
+	// err := dec.Decode(input) this works as well why?
 	err := dec.Decode(&input) // why doesn't DisallowUnknownFields work if I don't provide pointer to movie in movies.go: app.readJSON(w, r, movie)
 	if err != nil {
 		return err
@@ -70,7 +79,43 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, input i
 func (app *application) readString(queryValues url.Values, key string) string {
 	str := queryValues.Get(key)
 	if str == "" {
-		return ""
+		switch str {
+		case "title":
+			return DefaultString
+		case "sort":
+			return DefaultString
+
+			// default case?
+		}
 	}
 	return str
+}
+
+func (app *application) readInt(queryValues url.Values, key string, v *validator.Validator) int {
+	strInt := queryValues.Get(key)
+	if strInt == "" {
+		switch strInt {
+		case "page":
+			return DefaultPage
+		case "page_size":
+			return DefaultPageSize
+
+			// default case?
+		}
+	}
+	int, err := strconv.Atoi(strInt)
+	if err != nil {
+		v.AddError(key, "must be an integer")
+		return 1
+	}
+	return int
+}
+
+func (app *application) readCSV(queryValues url.Values, key string) []string {
+	strcsv := queryValues.Get(key)
+	if strcsv == "" {
+		return DefaultSlice
+	}
+	// fmt.Println(queryValues, sl)
+	return strings.Split(strcsv, ",")
 }
