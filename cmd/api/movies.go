@@ -153,17 +153,19 @@ func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+type params struct {
+	Title    string
+	Genres   []string
+	Page     int
+	PageSize int
+	Sort     string
+	// Runtime int32
+	// Year int32
+}
+
 // GET /v1/movies
 func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {
-	queryableParameters := struct {
-		Title    string
-		Genres   []string
-		Page     int
-		PageSize int
-		Sort     string
-		// Runtime int32
-		// Year int32
-	}{}
+	queryableParameters := params{}
 	v := validator.New()
 	queryValues := r.URL.Query()
 	queryableParameters.Title = app.readString(queryValues, "title")
@@ -172,6 +174,15 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 	queryableParameters.Genres = app.readCSV(queryValues, "genres")
 	queryableParameters.Sort = app.readString(queryValues, "sort")
 
-	fmt.Fprintf(w, "%+v\n", queryableParameters)
+	v.Check(queryableParameters.Page > 0, "page", "must be greater than zero")
+	v.Check(queryableParameters.Page <= 10_000, "page", "must be less than ten thousand")
+	v.Check(queryableParameters.PageSize > 0, "page_size", "must be greater than zero")
+	v.Check(queryableParameters.PageSize < 100, "page_size", "must be less than hundred")
+	// TODO: validation check for sort
 
+	if !v.Valid() {
+		app.errorResponse(w, r, http.StatusNotAcceptable, v.Errors)
+		return
+	}
+	fmt.Fprintf(w, "%+v\n", queryableParameters)
 }
