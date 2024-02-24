@@ -25,6 +25,11 @@ type config struct {
 		maxIdleTime  string // eg: 400ms, 3s, 13m, 1h
 
 	}
+	limiter struct {
+		rate   float64
+		burst  int
+		enable bool
+	}
 }
 
 // middleware of the application
@@ -45,6 +50,9 @@ func main() {
 	flag.StringVar(&cfg.db.maxIdleTime, "mit", "15m", "maximum idle time a connection can exist in Postgresql connection pool")
 	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("moviesbase_dsn"), "PostgreSQL DSN")
 	// flag.StringVar(&cfg.db.dsn, "dsn", "postgres://moviesbase:password@localhost/moviesbase", "PostgreSQL DSN")
+	flag.IntVar(&cfg.limiter.burst, "rate-limit-burst", 5, "maximum burst requests")
+	flag.Float64Var(&cfg.limiter.rate, "rate-limit-per-second", 2, "maximum requests filled per second")
+	flag.BoolVar(&cfg.limiter.enable, "rate-limiter-enable", true, "enable rate limiter")
 	flag.Parse()
 
 	lg := log.New(os.Stdout, "", log.Ldate|log.Ltime)
