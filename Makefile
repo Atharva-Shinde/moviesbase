@@ -1,16 +1,25 @@
+include .envrc
 #confirmation
+.PHONY: confirm
 confirm:
 	@echo 'Are you sure? [y/N]' && read ans && [ $${ans:-N} = y ]
 
 # run the application
-run:
-	@go run ./cmd/api
+.PHONY: run/api
+run/api:
+	go run ./cmd/api -dsn=${moviesbase_dsn}
 
 # connect to the postgresql database
+.PHONY: db
 db:
 	psql ${moviesbase_dsn}
 
+migrations/new: confirm
+	@echo 'creating new migration files named: ${filename}'
+	@migrate create -seq -ext=.sql -dir=./migrations ${filename}
+
 # migrations up
-up: confirm
+.PHONY: migrations/up
+migrations/up: confirm
 	@echo 'running migrations up'
 	@migrate -path ./migrations -database ${moviesbase_dsn} up
