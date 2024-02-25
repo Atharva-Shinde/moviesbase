@@ -25,11 +25,16 @@ migrations/up: confirm
 	@migrate -path ./migrations -database ${moviesbase_dsn} up
 
 .PHONY: audit
-audit:
+audit: vendor
 	@echo 'performing audit'
-	go mod tidy
-	go mod verify
 	go fmt ./...
 	go vet ./...
 	staticcheck ./...
 	go test -race -vet=off ./...
+
+.PHONY: vendor
+vendor:
+	@echo 'vendoring dependencies'
+	@go mod tidy
+	@go mod verify
+	go mod vendor
