@@ -23,3 +23,13 @@ migrations/new: confirm
 migrations/up: confirm
 	@echo 'running migrations up'
 	@migrate -path ./migrations -database ${moviesbase_dsn} up
+
+.PHONY: audit
+audit:
+	@echo 'performing audit'
+	go mod tidy
+	go mod verify
+	go fmt ./...
+	go vet ./...
+	staticcheck ./...
+	go test -race -vet=off ./...
