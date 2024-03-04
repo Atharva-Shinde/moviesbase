@@ -8,6 +8,7 @@ confirm:
 .PHONY: run/api
 run/api:
 	go run ./cmd/api -dsn=${moviesbase_dsn}
+# ./bin/api -dsn=${moviesbase_dsn}
 
 # connect to the postgresql database
 .PHONY: db
@@ -38,3 +39,12 @@ vendor:
 	@go mod tidy
 	@go mod verify
 	go mod vendor
+
+.PHONY: build
+build:
+# build local binary
+	go build -o=./bin/api ./cmd/api
+# build binary for linux/amd64
+	GOOS=linux GOARCH=amd64 go build -o=./bin/linux_amd64/api ./cmd/api
+# build binary for windows/amd64
+	GOOS=windows GORARCH=amd64 go build -o=./bin/windows_amd64/api ./cmd/api
